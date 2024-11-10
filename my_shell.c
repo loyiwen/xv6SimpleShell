@@ -4,9 +4,12 @@
 
 /* Read a line of characters from stdin. */
 int getcmd(char *buf, int nbuf) {
+  printf(">>> "); // Display the prompt
 
-  // ##### Place your code here
-
+  memset(buf, 0, nbuf);
+  gets(buf, nbuf);
+  if(buf[0] == 0) // EOF
+    return -1;
   return 0;
 }
 
