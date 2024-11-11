@@ -125,7 +125,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 		{
 			printf("cd: cannot change directory to %s\n", arguments[1]);
 		}
-		write(pcp[1], "cd", 3); // Notify the parent process
+		write(pcp[1], arguments[1], strlen(arguments[1]) + 1); // Notify the parent process
 		exit(2);				// Exit with status 2 to indicate a cd command
 	}
 	else
@@ -182,9 +182,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 
 int main(void)
 {
-
 	static char buf[100];
-
 	int pcp[2];
 	pipe(pcp);
 
@@ -192,20 +190,26 @@ int main(void)
 	while (getcmd(buf, sizeof(buf)) >= 0)
 	{
 		if (fork() == 0)
+		{
 			run_command(buf, 100, pcp);
-
+		}
 		/*
 		  Check if run_command found this is
 		  a CD command and run it if required.
 		*/
 		int child_status;
 		// ##### Place your code here
-		if (wait(&child_status) >= 0) {
-			if (child_status == 2) { // If the exit status is 2, it's a cd command
-				char cd_cmd[3];
-				read(pcp[0], cd_cmd, 3);
-				// Handle the 'cd' command here if needed
-			}
+		if (wait(&child_status) >= 0)
+		{
+			if (child_status == 2)
+			{ // If exit status is 2, it's a 'cd' command
+                char new_dir[100];
+                read(pcp[0], new_dir, sizeof(new_dir)); // Read the directory from the pipe
+                if (chdir(new_dir) < 0)
+				{
+                    printf("cd: cannot change directory to %s\n", new_dir);
+                }
+            }
 		}
 	}
 	exit(0);
