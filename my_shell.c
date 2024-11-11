@@ -140,7 +140,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 			if (fork() == 0)
 			{
 				exec(arguments[0], arguments);
-				printf("exec %s failed\n", arguments[0]);
+				fprintf(2, "exec %s failed\n", arguments[0]);
 				exit(1);
 			}
 			else
@@ -152,20 +152,22 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 		else
 		{
 			// ##### Place your code here.
-			if (fork() < 0)
+			// Handle regular commands without pipes
+			int pid = fork();
+			if (pid < 0)
 			{
-				printf("fork failed\n");
-            	exit(1);
+				fprintf(2, "fork failed\n");
+				exit(1);
 			}
-			if (fork() == 0)
+			if (pid == 0) // Child process
 			{
 				exec(arguments[0], arguments);
-            	printf("exec %s failed\n", arguments[0]);
-            	exit(1);
+				fprintf(2, "exec %s failed\n", arguments[0]);
+				exit(1);
 			}
-			else
-			{
-				wait(0); // Parent waits for the child process to finish
+			else // Parent process
+			{ 
+				wait(0); // Wait for the child process to finish
 			}
 		}
 	}
