@@ -5,7 +5,7 @@
 /* Read a line of characters from stdin. */
 int getcmd(char *buf, int nbuf)
 {
-	printf(">>> "); // Display the prompt
+	printf(">>> "); // Display prompt
 	memset(buf, 0, nbuf);
 	gets(buf, nbuf);
 
@@ -16,8 +16,7 @@ int getcmd(char *buf, int nbuf)
 }
 
 /*
-  A recursive function which parses the command
-  at *buf and executes it.
+  A recursive function which parses the command at *buf and executes it.
 */
 __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 {
@@ -40,8 +39,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 	for (int i = 0; i < nbuf; i++)
 	{
 
-		/* Parse the current character and set-up various flags:
-		   sequence_cmd, redirection, pipe_cmd and similar. */
+		/* Parse the current character and set-up various flags: sequence_cmd, redirection, pipe_cmd and similar. */
 
 		/* ##### Place your code here. */
 		// Handle spaces, newlines, tabs, and end of string
@@ -76,7 +74,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 		{
 			/* No redirection, continue parsing command. */
 
-			// Place your code here.
+			// #### Place your code here.
 		}
 		else
 		{
@@ -111,8 +109,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 
 
 	/*
-	  Sequence command. Continue this command in a new process.
-	  Wait for it to complete and execute the command following ';'.
+	  Sequence command. Continue this command in a new process. Wait for it to complete and execute the command following ';'.
 	*/
 	if (sequence_cmd)
 	{
@@ -126,8 +123,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 
 
 	/*
-	  If this is a redirection command,
-	  tie the specified files to std in/out.
+	  If this is a redirection command, tie the specified files to std in/out.
 	*/
 	if (redirection_left)
 	{
@@ -182,12 +178,12 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 		}
 	}
 
+
 	/* Parsing done. Execute the command. */
 
 
 	/*
-	  If this command is 'cd', write the arguments to the pcp pipe
-	  and exit with '2' to tell the parent process about this.
+	  If this command is 'cd', write the arguments to the pcp pipe and exit with '2' to tell the parent process about this.
 	*/
 	if (strcmp(arguments[0], "cd") == 0)
 	{
@@ -206,8 +202,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 	else
 	{
 		/*
-		  Pipe command: fork twice. Execute the left hand side directly.
-		  Call run_command recursion for the right side of the pipe.
+		  Pipe command: fork twice. Execute the left hand side directly. Call run_command recursion for the right side of the pipe.
 		*/
 		if (pipe_cmd)
 		{
@@ -255,6 +250,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 	exit(0);
 }
 
+
 int main(void)
 {
 	static char buf[100];
@@ -269,8 +265,7 @@ int main(void)
 			run_command(buf, 100, pcp);
 		}
 		/*
-		  Check if run_command found this is
-		  a CD command and run it if required.
+		  Check if run_command found this is a 'cd' command and run it if required.
 		*/
 		int child_status;
 		// ##### Place your code here
