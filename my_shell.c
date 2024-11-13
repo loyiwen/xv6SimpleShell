@@ -16,7 +16,7 @@ int getcmd(char *buf, int nbuf)
 }
 
 /*
-  A recursive function which parses the command at *buf and executes it.
+	A recursive function which parses the command at *buf and executes it.
 */
 __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 {
@@ -40,8 +40,8 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 	{
 
 		/* Parse the current character and set-up various flags: sequence_cmd, redirection, pipe_cmd and similar. */
-
 		/* ##### Place your code here. */
+
 		// Handle spaces, newlines, tabs, and end of string
 		if (buf[i] == ' ' || buf[i] == '\n' || buf[i] == '\t' || buf[i] == '\0')
 		{
@@ -73,13 +73,11 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 		if (!(redirection_left || redirection_right))
 		{
 			/* No redirection, continue parsing command. */
-
 			// #### Place your code here.
 		}
 		else
 		{
 			/* Redirection command. Capture the file names. */
-
 			// ##### Place your code here.
 			while (buf[i] == ' ' || buf[i] == '\t') i++; // Skip spaces after '<' or '>'
 
@@ -183,7 +181,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 
 
 	/*
-	  If this command is 'cd', write the arguments to the pcp pipe and exit with '2' to tell the parent process about this.
+		If this command is 'cd', write the arguments to the pcp pipe and exit with '2' to tell the parent process about this.
 	*/
 	if (strcmp(arguments[0], "cd") == 0)
 	{
@@ -197,7 +195,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 			printf("cd: cannot change directory to %s\n", arguments[1]);
 		}
 		write(pcp[1], arguments[1], strlen(arguments[1]) + 1); // Notify the parent process
-		exit(2);				// Exit with status 2 to indicate a cd command
+		exit(2); // Exit with status 2 to indicate a cd command
 	}
 	else
 	{
@@ -223,13 +221,12 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 		{
 			// ##### Place your code here.
 			// Handle regular commands without pipes
-			int pid = fork();
-			if (pid < 0)
+			if (fork() < 0)
 			{
 				fprintf(2, "fork failed\n");
 				exit(1);
 			}
-			if (pid == 0) // Child process
+			if (fork() == 0) // Child process
 			{
 				exec(arguments[0], arguments);
 				fprintf(2, "exec %s failed\n", arguments[0]);
@@ -265,7 +262,7 @@ int main(void)
 			run_command(buf, 100, pcp);
 		}
 		/*
-		  Check if run_command found this is a 'cd' command and run it if required.
+			Check if run_command found this is a 'cd' command and run it if required.
 		*/
 		int child_status;
 		// ##### Place your code here
