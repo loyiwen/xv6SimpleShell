@@ -32,7 +32,8 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 	int sequence_cmd = 0;
 
 	// Parse the command character by character.
-	for (int i = 0; i < nbuf; i++) {
+	int i = 0;
+	for (; i < nbuf; i++) {
 
 		// Parse the current character and set-up various flags: sequence_cmd, redirection, pipe_cmd and similar.
 		// ##### Place your code here.
@@ -47,6 +48,17 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 			continue;
 		}
 
+
+		// Detects '|'
+		if (buf[i] == '|') {
+			pipe_cmd = 1;
+			buf[i] = '\0';
+			i++;
+			break;
+		}
+
+
+		// Detects redirection flags
 		if (buf[i] == '<' && !redirection_flag)	{
 			buf[i] = '\0'; // Terminates previous argument
 			redirection_left = 1;
@@ -159,14 +171,67 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 	} else {
 		// Pipe command: fork twice. Execute the left hand side directly. Call run_command recursion for the right side of the pipe.
 		if (pipe_cmd) {
-			// ##### Place your code here.
-			if (fork() == 0) {
-				exec(arguments[0], arguments);
+			// Create a pipe
+			if (pipe(p) < 0) {
+				fprintf(2, "pipe failed\n");
+				exit(1);
+			}
+
+			printf("[DEBUG] Pipe detected, splitting commands...\n");
+
+			// Fork the first child to execute left-hand side command
+			int left_pid = fork();
+			if (left_pid < 0) {
+				fprintf(2, "fork for left command failed\n");
+				exit(1);
+			}
+
+			if (left_pid == 0) { // First child process
+				printf("[DEBUG] Executing left-hand side command: %s\n", arguments[0]);
+
+				// Redirect stdout to the write end of the pipe
+				close(1);			// Close current stdout
+				dup(p[1]); 			// Duplicate write end of the pipe to stdout
+				close(p[0]); 		// Close unused read end
+				close(p[1]); 		// Close write end after duplication
+
+				exec(arguments[0], arguments); // Execute left-hand side command
 				fprintf(2, "exec %s failed\n", arguments[0]);
 				exit(1);
-			} else {
-				wait(0); // Wait for the child process to finish
 			}
+
+			// Parent process: close the write end after forking the first child
+			close(p[1]);
+
+			// Fork the second child to execute right-hand side command
+			int right_pid = fork();
+			if (right_pid < 0) {
+				fprintf(2, "fork for right command failed\n");
+				exit(1);
+			}
+
+			if (right_pid == 0) {
+				printf("[DEBUG] Executing right command: %s\n", &buf[i + 1]);
+
+				// Redirect stdin to the read end of the pipe
+				close(0);			// Close current stdin
+				dup(p[0]); 			// Duplicate the read end of the pipe to stdin
+				close(p[0]); 		// Close read end after duplication
+
+				run_command(&buf[i + 1], nbuf - (i + 1), pcp);
+				fprintf(2, "[DEBUG] Failed to execute right-hand side command\n");
+    			exit(0);
+			}
+
+			// Parent process: close read end of pipe
+			close(p[0]);
+
+			// Wait for both child processes to complete
+			int status;
+			wait(&status); // Wait for the first child (left command)
+			wait(&status); // Wait for the second child (right command)
+
+			printf("[DEBUG] Both commands completed, returning to prompt...\n");
 		} else {
 			// ##### Place your code here.
 			// Handle regular commands without pipes
