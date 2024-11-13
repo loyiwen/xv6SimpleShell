@@ -6,11 +6,12 @@
 int getcmd(char *buf, int nbuf)
 {
 	printf(">>> "); // Display the prompt
-
 	memset(buf, 0, nbuf);
 	gets(buf, nbuf);
+
 	if (buf[0] == 0) // EOF
 		return -1;
+	
 	return 0;
 }
 
@@ -55,8 +56,10 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 				we = 0;
 			}
 			ws = 1;
+			continue;
 		}
-		else if (ws)
+		
+		if (ws)
 		{
 			arguments[numargs++] = &buf[i];
 			ws = 0;
@@ -201,8 +204,8 @@ int main(void)
 		// ##### Place your code here
 		if (wait(&child_status) >= 0)
 		{
-			if (child_status == 2)
-			{ // If exit status is 2, it's a 'cd' command
+			if (child_status == 2) // If exit status is 2, it's a 'cd' command
+			{
                 char new_dir[100];
                 read(pcp[0], new_dir, sizeof(new_dir)); // Read the directory from the pipe
                 if (chdir(new_dir) < 0)
