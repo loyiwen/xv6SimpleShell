@@ -25,45 +25,51 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 	/* Useful data structures and flags. */
 	char *arguments[10];
 	int numargs = 0;
-	/* Word start/end */
-	int ws = 1;
-	int we = 0;
+	int ws = 1; // Word start flag
+	int we = 0; // Word end flag
 
-	int redirection_left = 0;
-	int redirection_right = 0;
-	char *file_name_l = 0;
-	char *file_name_r = 0;
+	int redirection_flag = 0;
+	int redirection_left = 0, redirection_right = 0;
+	char *file_name_l = 0, *file_name_r = 0;
 
 	int p[2];
 	int pipe_cmd = 0;
-
 	int sequence_cmd = 0;
 
-	int i = 0;
 	/* Parse the command character by character. */
-	for (; i < nbuf; i++)
+	for (int i = 0; i < nbuf; i++)
 	{
 
 		/* Parse the current character and set-up various flags:
 		   sequence_cmd, redirection, pipe_cmd and similar. */
 
 		/* ##### Place your code here. */
+		// Handle spaces, newlines, tabs, and end of string
 		if (buf[i] == ' ' || buf[i] == '\n' || buf[i] == '\t' || buf[i] == '\0')
 		{
 			if (we)
 			{
-				buf[i] = '\0';
-				we = 0;
+				buf[i] = '\0'; // Terminate the current word
+				we = 0; // Set flag to indicate that buf[i] is no longer inside a word
 			}
-			ws = 1;
+			ws = 1; // The next non-space character is the start of a new word
 			continue;
 		}
-		
-		if (ws)
+
+		if (buf[i] == '<' && !redirection_flag)
 		{
-			arguments[numargs++] = &buf[i];
-			ws = 0;
-			we = 1;
+			
+			buf[i] = '\0'; // Terminates previous argument
+			redirection_left = 1;
+			redirection_flag = 1;
+			i++;
+		}
+		else if (buf[i] == '>' && !redirection_flag)
+		{
+			buf[i] = '\0'; // Terminates previous argument
+			redirection_right = 1;
+			redirection_flag = 1;
+			i++;
 		}
 
 		if (!(redirection_left || redirection_right))
@@ -77,9 +83,31 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 			/* Redirection command. Capture the file names. */
 
 			// ##### Place your code here.
+			while (buf[i] == ' ' || buf[i] == '\t') i++; // Skip spaces after '<' or '>'
+
+			if (redirection_left)
+			{
+				file_name_l = &buf[i];
+			}
+			else
+			{
+				file_name_r = &buf[i];
+			}
+			while (buf[i] != ' ' && buf[i] != '\t' && buf[i] != '\n' && buf[i] != '\0') i++;
+    		buf[i] = '\0'; // Null-terminate the filename
+    		continue;
+
+		}
+
+		if (ws)
+		{
+			arguments[numargs++] = &buf[i]; // Store start of new word
+			ws = 0;
+			we = 1;
 		}
 	}
 	arguments[numargs] = 0; // Null-terminate the argument list
+	redirection_flag = 0;
 
 
 	/*
@@ -104,17 +132,61 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp)
 	if (redirection_left)
 	{
 		// ##### Place your code here.
+		if (file_name_l)
+		{
+			int fd_in = open(file_name_l, O_RDONLY);
+			if (fd_in < 0) {
+				fprintf(2, "Error: cannot open file %s for reading\n", file_name_l);
+				exit(1);
+			}
+
+			close(0); // Close stdin
+			if (dup(fd_in) != 0)
+			{
+				fprintf(2, "Error: duplication failed for input redirection\n");
+				close(fd_in);
+				exit(1);
+			}
+			close(fd_in);
+		}
+		else
+		{
+			fprintf(2, "Error: missing filename after '<'\n");
+        	exit(1);
+		}
 	}
 	if (redirection_right)
 	{
 		// ##### Place your code here.
+		if (file_name_r)
+		{
+			int fd_out = open(file_name_r, O_WRONLY | O_CREATE | O_TRUNC);
+			if (fd_out < 0) {
+				fprintf(2, "Error: cannot open file %s for writing\n", file_name_r);
+				exit(1);
+			}
+
+			close(1); // Close stdout
+			if (dup(fd_out) != 1)
+			{
+				fprintf(2, "Error: duplication failed for output redirection\n");
+				close(fd_out);
+				exit(1);
+			}
+			close(fd_out);
+		}
+		else
+		{
+			fprintf(2, "Error: missing filename after '<'\n");
+        	exit(1);
+		}
 	}
 
 	/* Parsing done. Execute the command. */
 
 
 	/*
-	  If this command is a CD command, write the arguments to the pcp pipe
+	  If this command is 'cd', write the arguments to the pcp pipe
 	  and exit with '2' to tell the parent process about this.
 	*/
 	if (strcmp(arguments[0], "cd") == 0)
