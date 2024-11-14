@@ -74,7 +74,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 
 		if (!(redirection_left || redirection_right)) {
 		} else {
-			/* Redirection command. Capture the file names. */
+			// Redirection command. Capture the file names.
 			while (buf[i] == ' ' || buf[i] == '\t') i++; // Skip spaces after '<' or '>'
 			if (i >= nbuf || buf[i] == '\0') {
                 fprintf(2, "missing file for redirection\n");
