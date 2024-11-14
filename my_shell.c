@@ -34,7 +34,6 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 	// Parse the command character by character.
 	int i = 0;
 	for (; i < nbuf; i++) {
-
 		// Parse the current character and set-up various flags: sequence_cmd, redirection, pipe_cmd and similar.
 		// ##### Place your code here.
 
@@ -49,7 +48,7 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 		}
 
 
-		// Detects '|'
+		// Detect pipe command '|'
 		if (buf[i] == '|') {
 			pipe_cmd = 1;
 			buf[i] = '\0';
@@ -58,14 +57,23 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 		}
 
 
-		// Detects redirection flags
+		// Detect sequence command ';'
+		if (buf[i] == ';') {
+			sequence_cmd = 1;
+			buf[i] = '\0';
+			i++;
+			break;
+		}
+
+
+		// Detect redirection commands '<' and '>'
 		if (buf[i] == '<' && !redirection_flag)	{
-			buf[i] = '\0'; // Terminates previous argument
+			buf[i] = '\0'; // Terminate previous argument
 			redirection_left = 1;
 			redirection_flag = 1;
 			i++;
 		} else if (buf[i] == '>' && !redirection_flag) {
-			buf[i] = '\0'; // Terminates previous argument
+			buf[i] = '\0'; // Terminate previous argument
 			redirection_right = 1;
 			redirection_flag = 1;
 			i++;
@@ -85,22 +93,24 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 				file_name_r = &buf[i];
 			}
 			while (buf[i] != ' ' && buf[i] != '\t' && buf[i] != '\n' && buf[i] != '\0') i++;
-    		buf[i] = '\0'; // Null-terminate the filename
+    		buf[i] = '\0'; // Terminate the filename
     		continue;
 		}
 
+
+		// Detect start of new word
 		if (ws) {
 			arguments[numargs++] = &buf[i]; // Store start of new word
 			ws = 0;
 			we = 1;
 		}
 	}
-	arguments[numargs] = 0; // Null-terminate the argument list
+	arguments[numargs] = 0; // Terminate the argument list
 	redirection_flag = 0;
 
 
 	// Sequence command. Continue this command in a new process. Wait for it to complete and execute the command following ';'.
-	if (sequence_cmd) {
+	if (sequence_cmd) {		
 		sequence_cmd = 0;
 		if (fork() != 0) {
 			wait(0);
@@ -230,18 +240,18 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 			int status;
 			wait(&status); // Wait for the first child (left command)
 			wait(&status); // Wait for the second child (right command)
-
-			printf("[DEBUG] Both commands completed, returning to prompt...\n");
+			
+			printf("[DEBUG] All commands completed, returning to prompt...\n");
 		} else {
 			// ##### Place your code here.
 			// Handle regular commands without pipes
-			int pid = fork();
-			if (pid < 0)	{
+			int main_pid = fork();
+			if (main_pid < 0)	{
 				fprintf(2, "fork failed\n");
 				exit(1);
 			}
 
-			if (pid == 0) { // Child process
+			if (main_pid == 0) { // Child process
 				exec(arguments[0], arguments);
 				fprintf(2, "exec %s failed\n", arguments[0]);
 				exit(1);
