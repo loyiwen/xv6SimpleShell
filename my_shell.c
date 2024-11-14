@@ -118,8 +118,18 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 			wait(0);
 			// ##### Place your code here.
 			// Recursively execute the remaining commands after ';'
-			printf("[DEBUG] Executing next command after ';'\n");
-			run_command(&buf[i], nbuf - i, pcp);
+			// printf("[DEBUG] Executing next command after ';'\n");
+
+			// Recursively handle the next command after the ';'
+			// printf("[DEBUG] Handling next command after ';'\n");
+
+			// Skip any extra spaces after the ';' character
+			while (buf[i] == ' ' || buf[i] == '\t') {
+				i++;
+			}
+			if (buf[i] != '\0') {
+				run_command(&buf[i], nbuf - i, pcp);
+			}
 			exit(0);
 		} else {
 			exec(arguments[0], arguments);
@@ -207,14 +217,13 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 			}
 
 			if (left_pid == 0) { // First child process
-				printf("[DEBUG] Executing left-hand side command: %s\n", arguments[0]);
+				// printf("[DEBUG] Executing left-hand side command: %s\n", arguments[0]);
 
 				// Redirect stdout to the write end of the pipe
 				close(1);			// Close current stdout
 				dup(p[1]); 			// Duplicate write end of the pipe to stdout
 				close(p[0]); 		// Close unused read end
 				close(p[1]); 		// Close write end after duplication
-
 				exec(arguments[0], arguments); // Execute left-hand side command
 				fprintf(2, "exec %s failed\n", arguments[0]);
 				exit(1);
@@ -231,15 +240,14 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 			}
 
 			if (right_pid == 0) {
-				printf("[DEBUG] Executing right command: %s\n", &buf[i + 1]);
+				// printf("[DEBUG] Executing right command: %s\n", &buf[i + 1]);
 
 				// Redirect stdin to the read end of the pipe
 				close(0);			// Close current stdin
 				dup(p[0]); 			// Duplicate the read end of the pipe to stdin
 				close(p[0]); 		// Close read end after duplication
-
 				run_command(&buf[i + 1], nbuf - (i + 1), pcp);
-				fprintf(2, "[DEBUG] Failed to execute right-hand side command\n");
+				// fprintf(2, "[DEBUG] Failed to execute right-hand side command\n");
     			exit(0);
 			}
 
@@ -251,7 +259,8 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 			wait(&status); // Wait for the first child (left command)
 			wait(&status); // Wait for the second child (right command)
 			
-			printf("[DEBUG] All commands completed, returning to prompt...\n");
+			// printf("[DEBUG] All commands completed, returning to prompt...\n");
+			exit(0);
 		} else {
 			// ##### Place your code here.
 			// Handle regular commands without pipes
