@@ -112,9 +112,19 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 	// Sequence command. Continue this command in a new process. Wait for it to complete and execute the command following ';'.
 	if (sequence_cmd) {		
 		sequence_cmd = 0;
+		
+		// Fork a child process to execute the current command
 		if (fork() != 0) {
 			wait(0);
 			// ##### Place your code here.
+			// Recursively execute the remaining commands after ';'
+			printf("[DEBUG] Executing next command after ';'\n");
+			run_command(&buf[i], nbuf - i, pcp);
+			exit(0);
+		} else {
+			exec(arguments[0], arguments);
+			fprintf(2, "exec %s failed\n", arguments[0]);
+			exit(1);
 		}
 	}
 
