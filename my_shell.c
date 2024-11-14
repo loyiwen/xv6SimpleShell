@@ -242,7 +242,6 @@ __attribute__((noreturn)) void run_command(char *buf, int nbuf, int *pcp) {
 			// printf("[DEBUG] All commands completed, returning to prompt...\n");
 			exit(0);
 		} else {
-			// ##### Place your code here.
 			if (numargs == 0 || arguments[0] == 0 || strlen(arguments[0]) == 0) {
 				fprintf(2, "empty command\n");
 				exit(1);
